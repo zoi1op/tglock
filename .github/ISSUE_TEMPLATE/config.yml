@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Не открывается окно после распаковки
+    url: https://github.com/zoi1op/tglock/releases/latest
+    about: Архив нужно распаковывать целиком — рядом с exe лежит Windows App SDK. Скачайте .msi, он ставит всё сам.

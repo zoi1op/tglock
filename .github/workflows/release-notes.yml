@@ -1,0 +1,57 @@
+name: Оформление релиза
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+jobs:
+  describe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Проверить файлы и дописать описание
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          set -euo pipefail
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets
+
+          msi=$(find assets -name '*.msi' | head -1)
+          zip=$(find assets -name '*.zip' | head -1)
+          [ -n "$msi" ] || { echo "::error::В релизе нет .msi"; exit 1; }
+          [ -n "$zip" ] || { echo "::error::В релизе нет .zip"; exit 1; }
+
+          # Ловит самую дорогую ошибку публикации: приложить файлы от прошлой версии.
+          ver="${TAG#v}"
+          for f in "$msi" "$zip"; do
+            case "$(basename "$f")" in
+              *"$ver"*) ;;
+              *) echo "::error::$(basename "$f") собран не из версии $ver"; exit 1 ;;
+            esac
+          done
+
+          gh release view "$TAG" --json body --jq .body > body.md
+          if grep -q '^### Файлы$' body.md; then
+            echo "Описание уже дополнено — пропускаю"
+            exit 0
+          fi
+
+          {
+            cat body.md
+            echo
+            echo '### Файлы'
+            echo
+            echo '| Файл | Размер | SHA256 |'
+            echo '|---|---:|---|'
+            for f in "$zip" "$msi"; do
+              printf '| `%s` | %s | `%s` |\n' \
+                "$(basename "$f")" \
+                "$(numfmt --to=iec --suffix=B --format='%.1f' "$(stat -c%s "$f")")" \
+                "$(sha256sum "$f" | cut -d' ' -f1)"
+            done
+          } > notes.md
+
+          gh release edit "$TAG" --notes-file notes.md

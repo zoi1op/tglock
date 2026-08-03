@@ -1,0 +1,67 @@
+name: Что-то не работает
+description: Прокси не поднимается, Telegram не подключается, окно не открывается, обрывы
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Больше всего помогает журнал. Он лежит в `%TEMP%\tglock.log` —
+        вставьте в поле «Внимание, адрес» путь `%TEMP%` в проводник, либо нажмите
+        в окне кнопку «Показать лог».
+
+  - type: input
+    id: version
+    attributes:
+      label: Версия
+      description: Написана в заголовке окна, либо `tg_unblock.exe --version`
+      placeholder: "0.4.0"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install
+    attributes:
+      label: Как установлено
+      options:
+        - Установщик .msi
+        - Распакованный .zip
+        - Служба Windows
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Версия Windows
+      description: "`winver` — нужен номер сборки, например: Windows 11 23H2 (22631)"
+      placeholder: "Windows 11 23H2 (22631)"
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happens
+    attributes:
+      label: Что происходит
+      description: Что вы сделали, что ожидали увидеть и что увидели вместо этого
+    validations:
+      required: true
+
+  - type: textarea
+    id: log
+    attributes:
+      label: Журнал
+      description: |
+        Последние строки из `%TEMP%\tglock.log`. Если проблема воспроизводится —
+        запустите `tg_unblock.exe run --verbose` и приложите вывод: там видно,
+        по какому пути ушло каждое соединение.
+      render: text
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checked
+    attributes:
+      label: Проверено
+      options:
+        - label: Порт 1080 не занят другой программой
+        - label: Папка с приложением распакована целиком, а не один `tg_unblock.exe`
