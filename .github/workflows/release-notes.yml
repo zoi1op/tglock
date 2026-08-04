@@ -16,7 +16,6 @@ jobs:
   describe:
     runs-on: ubuntu-latest
     steps:
-      # Без чекаута gh падает с «not a git repository» ещё до того, как посмотрит на --repo.
       - uses: actions/checkout@v4
 
       - name: Проверить файлы и дописать описание
@@ -25,16 +24,15 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           set -euo pipefail
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets
-
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets.
+          setup=$(find assets -name '*-setup.exe' | head -1)
           msi=$(find assets -name '*.msi' | head -1)
           zip=$(find assets -name '*.zip' | head -1)
-          [ -n "$msi" ] || { echo "::error::В релизе нет .msi"; exit 1; }
-          [ -n "$zip" ] || { echo "::error::В релизе нет .zip"; exit 1; }
-
-          # Ловит самую дорогую ошибку публикации: приложить файлы от прошлой версии.
+          [ -n "$setup" ] || { echo "::error::В релизе нет -setup.exe"; exit 1; }
+          [ -n "$zip" ]   || { echo "::error::В релизе нет .zip"; exit 1; }
           ver="${TAG#v}"
-          for f in "$msi" "$zip"; do
+          for f in $setup $zip $msi; do
+            [ -n "$f" ] || continue
             case "$(basename "$f")" in
               *"$ver"*) ;;
               *) echo "::error::$(basename "$f") собран не из версии $ver"; exit 1 ;;
@@ -54,7 +52,8 @@ jobs:
             echo
             echo '| Файл | Размер | SHA256 |'
             echo '|---|---:|---|'
-            for f in "$zip" "$msi"; do
+            for f in $setup $zip $msi; do
+              [ -n "$f" ] || continue
               printf '| `%s` | %s | `%s` |\n' \
                 "$(basename "$f")" \
                 "$(numfmt --to=iec --suffix=B --format='%.1f' "$(stat -c%s "$f")")" \
