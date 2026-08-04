@@ -24,7 +24,7 @@ jobs:
           TAG: ${{ github.event.release.tag_name || inputs.tag }}
         run: |
           set -euo pipefail
-          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets.
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --dir assets
           setup=$(find assets -name '*-setup.exe' | head -1)
           msi=$(find assets -name '*.msi' | head -1)
           zip=$(find assets -name '*.zip' | head -1)
